@@ -4,15 +4,19 @@ namespace App\Http\Controllers;
 
 session_start();
 
+use App\Http\Requests\codeRequest;
 use App\Http\Requests\ConnexionRequest;
+use App\Http\Requests\forgotRequest;
 use App\Http\Requests\passwordCreateRequest;
 use App\Http\Requests\passwordUpdateRequest;
+use App\Mail\Recuperation;
 use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 class ConnectionController extends Controller
 {
@@ -165,6 +169,86 @@ class ConnectionController extends Controller
 
         }
         
+    }
+
+    public function forgotPasswordForm()
+    {
+        return view('clients.forgotForm');
+    }
+
+    public function codeForm()
+    {
+        return view('clients.codeForm');
+    }
+
+    public function forgotPassword(forgotRequest $request)
+    {
+         $email =  $request->input('email');
+        $user = DB::select('select * from clients where email = ?', [$email]);
+        if(empty($user))
+        {
+            return redirect()->route('forgotPassForm')->withOk("Cette adresse n'est pas enregistrée");
+        }else
+        {
+            $code = "";
+            for ($i=0; $i < 8; $i++) { 
+                $code .= mt_rand(0, 9); 
+            }
+            
+            $usr = DB::select('select * from recuperations where email = ?', [$email]);
+            if(empty($usr))
+            {
+                DB::insert('insert into recuperations (email, code) values (?, ?)', [$email, $code]);
+            }else
+            {
+                DB::update('update recuperations set code = ? where email = ?', [$code, $email]);
+            }
+
+            $array = [
+                'user' => $user[0],
+                'code' => $code
+            ];
+
+            Mail::to($email)->send(new Recuperation($array));
+
+            return redirect()->route('codeForm')->withEmail($email);
+            
+        }
+    }
+
+    public function changePasswordForm()
+    {
+        return view('clients.editPwd');
+    }
+
+    public function codeValidationForm(codeRequest $request)
+    {
+        $code = $request->input('code');
+        $recup = DB::select('select * from recuperations where code = ?', [$code]);
+        
+        if(empty($recup))
+        {
+            return redirect()->route('codeForm')->withOk('Votre code de validation est incorrect');
+        }else
+        {
+            $recup_mail = Crypt::encrypt($recup[0]->email);
+            $_SESSION['recup_mail'] = $recup_mail;
+            return redirect()->route('changePasswordForm');
+        }
+    }
+
+    public function changePassword(passwordUpdateRequest $request)
+    {
+        try {
+            $emailUser = Crypt::decrypt($_SESSION['recup_mail']);
+        } catch (DecryptException $e) {
+            session_destroy();
+        }
+        $newPassword = Crypt::encrypt($request->input('password'));
+        $user = DB::select('select id from clients where email = ?', [$emailUser])[0];
+        $user_id = $user->id;
+        $rowUpdate = DB::update('update clients set password = ? where id = ?', [$newPassword,$user_id]);
+        return redirect()->route('signinForm')->withOk('Votre mot de pass a été modifié, vous pouvez vous connectez maintenant');
     }
 
 }

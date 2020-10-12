@@ -104,11 +104,20 @@ Route::get('/viderpanier',function(){
     Cart::destroy();
 });
 
+//Register and Login
 Route::get('showForm', 'UserClientController@edit')->name('showForm');
 Route::post('client/add', 'UserClientController@store')->name('client.add');
 
 Route::get('signinForm', 'ConnectionController@formConnexion')->name('signinForm');
 Route::post('signin', 'ConnectionController@connexion')->name('signin');
 
+//Deconnexion and forgotPassword
 Route::get('disconected', 'ConnectionController@disconected')->name('disconected');
+Route::get('forgotPassForm', 'ConnectionController@forgotPasswordForm')->name('forgotPassForm');
+Route::post('forgotPassword', 'ConnectionController@forgotPassword')->name('forgotPassword');
+Route::get('codeForm', 'ConnectionController@codeForm')->name('codeForm');
+Route::post('codeValidationForm', 'ConnectionController@codeValidationForm')->name('codeValidationForm');
+Route::get('changePasswordForm', 'ConnectionController@changePasswordForm')->name('changePasswordForm');
+Route::post('changePassword', 'ConnectionController@changePassword')->name('changePassword');
+
 

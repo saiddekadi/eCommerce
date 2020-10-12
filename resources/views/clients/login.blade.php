@@ -40,6 +40,7 @@ Smartphone Compatible web template, free webdesigns for Nokia, Samsung, LG, Sony
 							@if(session()->has('ok'))
 								<div class="alert alert-success alert-dismissible">{!! session('ok') !!}</div>
 							@endif
+							
 							<form  method="POST" action="{{ route('signin') }}">
 								@csrf
 								<div class="form-group {!! $errors->has('email') ? 'has-error' : '' !!}">
@@ -70,6 +71,7 @@ Smartphone Compatible web template, free webdesigns for Nokia, Samsung, LG, Sony
 							</ul>
 						</div>
 						<p><a href="{{ route('showForm') }}"> Vous n'avez pas de compte?</a></p>
+						<p><a href="{{ route('forgotPassForm') }}"> Mot de passe oublié</a></p>
 						<!--<p><a href="">Mot de passe oublié ?</a></p>-->
 
 							<h6><a href="javascript:history.back()">Retour</a><h6>
